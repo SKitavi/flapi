@@ -34,8 +34,8 @@ define([
         this.audio.playMilestone();
       }
       
-      // Spawn heart every 7 obstacles
-      if (this.obstaclesPassed % 7 === 0) {
+      // Spawn heart every 3 obstacles
+      if (this.obstaclesPassed % 3 === 0) {
         this.spawnHeart();
       }
     },
