@@ -1,0 +1,156 @@
+define([
+  "dojo/_base/lang","dojo/_base/declare","dojo/_base/fx","dojo/on","app/game/Player","app/game/PipeManager","app/game/AudioManager"
+], function(lang, declare, baseFx, on, Player, PipeManager, AudioManager){
+  var GameEngine = declare(null, {
+    constructor: function(canvas, ctx, config, hud){
+      this.canvas = canvas; this.ctx = ctx; this.cfg = config; this.hud = hud;
+      this.audio = new AudioManager();
+      this.reset();
+    },
+    reset: function(){
+      this.time = { acc:0, last:0, step:1/60 };
+      this.running = false; this.score = 0; this.best = Number(localStorage.getItem('best')||0);
+      this.player = new Player(80, this.canvas.height/2, this.cfg.physics);
+      this.pipes = new PipeManager(this.canvas.width, this.canvas.height, this.cfg.pipes, lang.hitch(this, this.onPass));
+      this.hud.setScore(0); this.hud.setBest(this.best);
+      this.audio.reset();
+    },
+    onPass: function(){ 
+      this.score++; 
+      this.hud.setScore(this.score, true); 
+      if (this.score === 10) {
+        this.audio.playMilestone();
+      }
+    },
+    start: function(){ if(this.running) return; this.running = true; this.time.last = performance.now(); this.audio.resume(); this.loop(); },
+    pause: function(){ this.running=false; },
+    resume: function(){ if(!this.running){ this.running=true; this.time.last=performance.now(); this.audio.resume(); this.loop(); } },
+    inputFlap: function(){ if(!this.running){ this.start(); } this.player.flap(); this.audio.playFlap(); },
+    loop: function(){ if(!this.running) return; var now = performance.now(); var dt = (now - this.time.last)/1000; this.time.last = now; this.time.acc += dt; var step = this.time.step;
+      while(this.time.acc >= step){ this.update(step); this.time.acc -= step; }
+      this.render(); requestAnimationFrame(this.loop.bind(this)); },
+    update: function(dt){
+      this.player.update(dt, this.canvas.height);
+      this.pipes.update(dt, this.cfg.pipes.speed);
+      this.audio.update(dt);
+      if(this.pipes.collides(this.player.getAABB())){ this.gameOver(); }
+    },
+    gameOver: function(){
+      this.running=false; 
+      this.audio.playDeath();
+      if(this.score>this.best){ this.best=this.score; localStorage.setItem('best', String(this.best)); this.hud.setBest(this.best,true); }
+      this.hud.flashGameOver(this.score, this.best);
+    },
+    render: function(){ 
+      var ctx=this.ctx; 
+      var w=this.canvas.width, h=this.canvas.height; 
+      ctx.clearRect(0,0,w,h);
+      
+      // Dark vampire night background - deep purple to black gradient
+      var bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+      bgGrad.addColorStop(0, "#1a0a2e");
+      bgGrad.addColorStop(0.5, "#2d1b3d");
+      bgGrad.addColorStop(1, "#0f0618");
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, w, h);
+      
+      // Stars
+      ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+      var starPositions = [[50, 40], [120, 80], [200, 50], [280, 90], [310, 30], [80, 150], [250, 140], [180, 180]];
+      for (var i = 0; i < starPositions.length; i++) {
+        ctx.beginPath();
+        ctx.arc(starPositions[i][0], starPositions[i][1], 1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      // Moon with green goo dripping
+      var moonX = w * 0.75, moonY = h * 0.2, moonR = 40;
+      
+      // Moon glow
+      var moonGlow = ctx.createRadialGradient(moonX, moonY, moonR * 0.3, moonX, moonY, moonR * 2);
+      moonGlow.addColorStop(0, "rgba(200, 200, 150, 0.15)");
+      moonGlow.addColorStop(1, "rgba(200, 200, 150, 0)");
+      ctx.fillStyle = moonGlow;
+      ctx.fillRect(moonX - moonR * 2, moonY - moonR * 2, moonR * 4, moonR * 4);
+      
+      // Moon body
+      ctx.fillStyle = "#e8e8c8";
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Moon craters
+      ctx.fillStyle = "rgba(180, 180, 160, 0.4)";
+      ctx.beginPath();
+      ctx.arc(moonX - 10, moonY - 8, 8, 0, Math.PI * 2);
+      ctx.arc(moonX + 12, moonY + 5, 6, 0, Math.PI * 2);
+      ctx.arc(moonX - 5, moonY + 12, 5, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Green goo dripping from moon
+      var t = Date.now();
+      var drips = [
+        { x: moonX - 15, len: Math.sin(t * 0.002) * 10 + 35, delay: 0 },
+        { x: moonX + 10, len: Math.sin(t * 0.0025 + 1) * 12 + 40, delay: 0.5 },
+        { x: moonX, len: Math.sin(t * 0.003 + 2) * 8 + 30, delay: 1 }
+      ];
+      
+      for (var d = 0; d < drips.length; d++) {
+        var gooGrad = ctx.createLinearGradient(drips[d].x, moonY + moonR, drips[d].x, moonY + moonR + drips[d].len);
+        gooGrad.addColorStop(0, "rgba(50, 255, 100, 0.8)");
+        gooGrad.addColorStop(1, "rgba(50, 255, 100, 0.2)");
+        ctx.fillStyle = gooGrad;
+        ctx.beginPath();
+        ctx.moveTo(drips[d].x - 3, moonY + moonR);
+        ctx.lineTo(drips[d].x - 2, moonY + moonR + drips[d].len - 4);
+        ctx.lineTo(drips[d].x, moonY + moonR + drips[d].len);
+        ctx.lineTo(drips[d].x + 2, moonY + moonR + drips[d].len - 4);
+        ctx.lineTo(drips[d].x + 3, moonY + moonR);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Drip tip
+        ctx.fillStyle = "rgba(50, 255, 100, 0.9)";
+        ctx.beginPath();
+        ctx.arc(drips[d].x, moonY + moonR + drips[d].len, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      // Fog layers
+      ctx.fillStyle = "rgba(80, 50, 100, 0.15)";
+      ctx.beginPath();
+      for (var f = 0; f < w; f += 30) {
+        var fogY = h * 0.7 + Math.sin(f * 0.05 + t * 0.0005) * 20;
+        if (f === 0) ctx.moveTo(f, fogY);
+        else ctx.lineTo(f, fogY);
+      }
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      ctx.fill();
+      
+      this.pipes.draw(ctx);
+      this.player.draw(ctx);
+      
+      // Bloody ground
+      ctx.fillStyle = "#1a0a0a";
+      ctx.fillRect(0, h - 30, w, 30);
+      ctx.strokeStyle = "#4a0000";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(0, h - 30);
+      ctx.lineTo(w, h - 30);
+      ctx.stroke();
+      
+      // Blood puddles on ground
+      ctx.fillStyle = "rgba(139, 0, 0, 0.4)";
+      for (var bp = 0; bp < 5; bp++) {
+        var bpX = (bp * 80 + t * 0.05) % w;
+        ctx.beginPath();
+        ctx.ellipse(bpX, h - 15, 15, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  });
+  return GameEngine;
+});

@@ -1,0 +1,51 @@
+# Flappy Haunt 🦇
+
+A dark vampire-themed Flappy Bird clone with creepy ambience, featuring a menacing crow with glowing red eyes navigating through bloody gravestones and upside-down crosses. Built with Dojo Toolkit (AMD, 1.7+ compatible) for UI/events/effects and canvas for rendering. On-chain highscores are integrated via Cartridge Controller targeting Starknet Sepolia.
+
+## Quick Start
+
+- Static run: open `index.html` with a static server
+  - `npx serve` (or any static server) from the project root
+  - Open http://localhost:3000 (or the printed URL)
+- Controls: Tap/Click or press Space/Up to flap. P = pause, R = restart.
+- **Audio**: Game includes procedural audio (ambient drone, owl hoots, death sound, milestone bells). Click/tap to start and enable audio context.
+
+## Theme & Features
+
+- **Vampire Aesthetic**: Dark purple night sky, moon dripping green goo, bloody ground, fog layers
+- **Player**: Creepy vampire crow with animated wings, menacing red glowing eyes, and sharp talons
+- **Obstacles**: Alternating bloody gravestones (with R.I.P.) and upside-down crosses with blood drips
+- **Audio**: 
+  - Continuous creepy ambient drone (low-frequency rumble)
+  - Periodic owl hooting (every 8-15 seconds)
+  - Unique death sound (dramatic descending tone)
+  - Special milestone sound when reaching score of 10 (triumphant bells)
+- **Physics**: Smooth flapping, deterministic collision detection, progressive difficulty
+
+## Tech
+
+- Dojo 1.10 (AMD): `dojo/dom`, `dojo/dom-construct`, `dojo/on`, `dojo/keys`, `dojo/_base/fx`, `dojo/fx`
+- Canvas 2D for game rendering with procedural graphics (no image assets)
+- Web Audio API for procedural sound generation (no audio files needed)
+- Cartridge Controller for on-chain scores (Starknet Sepolia)
+
+## Configure Starknet (Cartridge)
+
+- The adapter lazy-loads `@cartridge/controller` and `starknet` from unpkg and sets network to Sepolia using:
+  - `chains: [{ rpcUrl: "https://api.cartridge.gg/x/starknet/sepolia" }]`
+  - `defaultChainId: constants.StarknetChainId.SN_SEPOLIA`
+- Score submission wiring is added in the Web3 milestone. Provide your leaderboard contract address/ABI and permitted `entrypoint` (e.g., `submit_score`) in session policies.
+
+## Development Plan
+
+See `.PLAN` for milestones and tasks.
+
+## Security Notes
+
+- No private keys in client. All signing is performed via Cartridge Controller.
+- Use session policies for gasless gameplay and fewer prompts.
+
+## Deploy
+
+- Host the static files on Netlify/Vercel/Cloudflare Pages.
+- Ensure HTTPS so Cartridge can operate correctly.

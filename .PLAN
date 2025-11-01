@@ -1,0 +1,41 @@
+Milestones
+
+✅ 1) Scaffold + core mechanics
+- Dojo AMD bootstrap, canvas, loop
+- Player physics, input (dojo/on + dojo/keys)
+- Local best score
+
+✅ 2) Pipes + scoring + HUD polish
+- PipeManager spawn/collision/score
+- Score pop/glow (dojo/_base/fx)
+- Pause/restart overlay transitions (dojo/fx)
+
+✅ 3) Vampire theme visuals
+- Dark purple night background with stars
+- Moon dripping green goo
+- Creepy vampire crow player (animated wings, red eyes)
+- Bloody gravestones and upside-down crosses
+- Fog layers and blood puddles
+
+✅ 4) Audio system
+- Creepy ambient drone (Web Audio API)
+- Periodic owl hooting (randomized intervals)
+- Death sound (dramatic descending tone)
+- Milestone sound at score 10 (bell chimes)
+- Flap sound effects
+
+⏳ 5) Input polish
+- Touch/keyboard debounce
+- Mobile Safari tuning
+- Responsive canvas scaling
+
+⏳ 6) Cartridge integration
+- Connect/auth, session policies
+- submitScore(score), fetchLeaderboard()
+- Contract config (Sepolia)
+- HUD indicators for on-chain status
+
+⏳ 7) Tests & deploy
+- Unit tests (engine, pipes, collision)
+- README finalization
+- Deploy to static host (Netlify/Vercel)
