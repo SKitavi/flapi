@@ -15,18 +15,38 @@ define([
     dom.byId('startMenu').classList.remove('hidden');
     dom.byId('overlay').classList.add('hidden');
     state.playing = false;
+    engine.pause();
+    dom.byId('btnPause').textContent = 'Pause';
   }
 
   function play() {
     dom.byId('startMenu').classList.add('hidden');
     dom.byId('overlay').classList.add('hidden');
     state.playing = true;
-    engine.start();
+    dom.byId('btnPause').textContent = 'Pause';
+    if (engine.running) {
+      // Resume if paused
+      engine.resume();
+    } else {
+      // Start new game
+      engine.start();
+    }
   }
 
   function pause() {
-    state.playing = !state.playing;
-    state.playing ? engine.resume() : engine.pause();
+    if (state.playing) {
+      // Pause the game and show start menu
+      state.playing = false;
+      engine.pause();
+      dom.byId('startMenu').classList.remove('hidden');
+      dom.byId('btnPause').textContent = 'Resume';
+    } else {
+      // Resume the game and hide start menu
+      state.playing = true;
+      engine.resume();
+      dom.byId('startMenu').classList.add('hidden');
+      dom.byId('btnPause').textContent = 'Pause';
+    }
   }
 
   function restart() {
@@ -35,6 +55,7 @@ define([
   }
 
   var btnPlay = dom.byId('btnPlay');
+  var btnPause = dom.byId('btnPause');
   var btnRestart = dom.byId('btnRestart');
   var btnRestartGame = dom.byId('restart');
   var btnBackToMenu = dom.byId('backToMenu');
@@ -44,6 +65,7 @@ define([
   var overlayText = dom.byId('overlayText');
 
   on(btnPlay, 'click', play);
+  on(btnPause, 'click', pause);
   on(btnRestart, 'click', restart);
   on(btnRestartGame, 'click', restart);
   on(btnBackToMenu, 'click', showStartMenu);
@@ -99,8 +121,16 @@ define([
 
   // Keyboard
   on(document, 'keydown', function (e) {
-    if (e.keyCode === keys.SPACE || e.keyCode === keys.UP_ARROW) { e.preventDefault(); engine.inputFlap(); }
-    else if (e.keyCode === 80) { pause(); } // P
+    if (e.keyCode === keys.SPACE || e.keyCode === keys.UP_ARROW) {
+      e.preventDefault();
+      engine.inputFlap();
+    }
+    else if (e.keyCode === 80 || e.keyCode === 13) { // P key or Enter key
+      e.preventDefault();
+      if (state.playing !== undefined) { // Only pause if game has been initialized
+        pause();
+      }
+    }
     else if (e.keyCode === 82) { restart(); } // R
   });
   // Touch/Click on canvas
