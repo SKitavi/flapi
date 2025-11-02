@@ -1,7 +1,7 @@
 define([
-  "dojo/dom","dojo/dom-construct","dojo/on","dojo/keys","dojo/_base/lang","dojo/_base/fx","dojo/fx",
-  "app/config","app/game/GameEngine","app/ui/Hud","app/web3/CartridgeControllerAdapter"
-], function(dom, domConstruct, on, keys, lang, baseFx, fx, config, GameEngine, Hud, Cartridge){
+  "dojo/dom", "dojo/dom-construct", "dojo/on", "dojo/keys", "dojo/_base/lang", "dojo/_base/fx", "dojo/fx",
+  "app/config", "app/game/GameEngine", "app/ui/Hud", "app/web3/CartridgeControllerAdapter"
+], function (dom, domConstruct, on, keys, lang, baseFx, fx, config, GameEngine, Hud, Cartridge) {
   var canvas = dom.byId("game");
   var ctx = canvas.getContext("2d");
   var scoreNode = dom.byId("score");
@@ -9,49 +9,71 @@ define([
   var walletNode = dom.byId("walletBtn");
   var hud = new Hud(scoreNode, bestNode, walletNode);
   var engine = new GameEngine(canvas, ctx, config, hud);
-  var state = { playing:false, walletConnected:false, currentScore:0 };
+  var state = { playing: false, walletConnected: false, currentScore: 0 };
 
-  function play(){
+  function showStartMenu() {
+    dom.byId('startMenu').classList.remove('hidden');
     dom.byId('overlay').classList.add('hidden');
-    state.playing = true; engine.start();
+    state.playing = false;
   }
-  function pause(){ state.playing = !state.playing; state.playing? engine.resume(): engine.pause(); }
-  function restart(){ engine.reset(); play(); }
 
-  var btnRestart = dom.byId('restart');
+  function play() {
+    dom.byId('startMenu').classList.add('hidden');
+    dom.byId('overlay').classList.add('hidden');
+    state.playing = true;
+    engine.start();
+  }
+
+  function pause() {
+    state.playing = !state.playing;
+    state.playing ? engine.resume() : engine.pause();
+  }
+
+  function restart() {
+    engine.reset();
+    play();
+  }
+
+  var btnPlay = dom.byId('btnPlay');
+  var btnRestart = dom.byId('btnRestart');
+  var btnRestartGame = dom.byId('restart');
+  var btnBackToMenu = dom.byId('backToMenu');
   var btnWallet = dom.byId('walletBtn');
   var btnMint = dom.byId('mintBtn');
   var nftMessage = dom.byId('nftMessage');
   var overlayText = dom.byId('overlayText');
 
+  on(btnPlay, 'click', play);
   on(btnRestart, 'click', restart);
+  on(btnRestartGame, 'click', restart);
+  on(btnBackToMenu, 'click', showStartMenu);
 
   // Wallet connection
   var connectBusy = false;
-  on(btnWallet, 'click', function(){ 
-    if(connectBusy) return; 
-    if(state.walletConnected){
+  on(btnWallet, 'click', function () {
+    if (connectBusy) return;
+    if (state.walletConnected) {
       // Already connected, show address
       return;
     }
-    connectBusy = true; 
-    btnWallet.textContent='Connecting…';
+    connectBusy = true;
+    btnWallet.textContent = 'Connecting…';
     Cartridge.connect()
-      .then(function(acct){ 
+      .then(function (acct) {
         state.walletConnected = true;
         hud.setWalletStatus(true, acct.address);
         console.log('Wallet connected:', acct.address);
       })
-      .catch(function(err){ 
+      .catch(function (err) {
         console.error('Connection failed:', err);
-        btnWallet.textContent='Connect Wallet';
+        btnWallet.textContent = 'Connect Wallet';
       })
-      .finally(function(){ connectBusy=false; });
+      .finally(function () { connectBusy = false; });
   });
 
   // NFT Minting
-  on(btnMint, 'click', function(){
-    if(!state.walletConnected){
+  on(btnMint, 'click', function () {
+    if (!state.walletConnected) {
       nftMessage.textContent = 'Please connect wallet first!';
       nftMessage.style.display = 'block';
       nftMessage.style.color = '#ff5500';
@@ -60,8 +82,8 @@ define([
     btnMint.textContent = 'Minting...';
     btnMint.disabled = true;
     Cartridge.mintScoreNFT(state.currentScore)
-      .then(function(result){
-        if(result.success){
+      .then(function (result) {
+        if (result.success) {
           nftMessage.textContent = result.message + ' TX: ' + result.txHash.slice(0, 10) + '...';
           nftMessage.style.color = '#32ff64';
           btnMint.style.display = 'none';
@@ -76,22 +98,23 @@ define([
   });
 
   // Keyboard
-  on(document, 'keydown', function(e){
-    if(e.keyCode === keys.SPACE || e.keyCode === keys.UP_ARROW){ e.preventDefault(); engine.inputFlap(); }
-    else if(e.keyCode === 80){ pause(); } // P
-    else if(e.keyCode === 82){ restart(); } // R
+  on(document, 'keydown', function (e) {
+    if (e.keyCode === keys.SPACE || e.keyCode === keys.UP_ARROW) { e.preventDefault(); engine.inputFlap(); }
+    else if (e.keyCode === 80) { pause(); } // P
+    else if (e.keyCode === 82) { restart(); } // R
   });
   // Touch/Click on canvas
   var flap = lang.hitch(engine, engine.inputFlap);
-  on(canvas, 'touchstart', function(e){ e.preventDefault(); flap(); });
-  on(canvas, 'click', function(){ flap(); });
+  on(canvas, 'touchstart', function (e) { e.preventDefault(); flap(); });
+  on(canvas, 'click', function () { flap(); });
 
-  // Game over handler - show mint button if high score and wallet connected
-  engine.onGameOver = function(score){
+  // Game over handler - show game over overlay with mint option
+  engine.onGameOver = function (score) {
     state.currentScore = score;
+    state.playing = false;
     overlayText.textContent = 'Game Over - Score: ' + score;
-    
-    if(state.walletConnected && score >= 10){
+
+    if (state.walletConnected && score >= 10) {
       btnMint.style.display = 'block';
       btnMint.disabled = false;
       btnMint.textContent = 'Mint NFT 🎃';
@@ -102,8 +125,12 @@ define([
       btnMint.style.display = 'none';
       nftMessage.style.display = 'none';
     }
+
+    // Show game over overlay
+    dom.byId('overlay').classList.remove('hidden');
   };
 
-  // Start with overlay visible
-  baseFx.fadeIn({ node: dom.byId('overlay'), duration: 350 }).play();
+  // Start with main menu visible
+  dom.byId('startMenu').classList.remove('hidden');
+  dom.byId('overlay').classList.add('hidden');
 });

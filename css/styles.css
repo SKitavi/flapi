@@ -16,8 +16,10 @@ html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg0),var(
 .btn.primary{background:var(--orange);color:#1b1009;border-color:#000}
 .btn.accent{background:var(--teal);color:#001b19;border-color:#000}
 .btn:active{transform:translateY(1px)}
-.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px) brightness(0.9)}
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px) brightness(0.9);z-index:200;}
 .overlay.hidden{display:none}
-.panel{background:rgba(17,19,42,0.9);padding:24px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);box-shadow:0 10px 30px rgba(0,0,0,0.5)}
+.panel{background:rgba(17,19,42,0.9);padding:24px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);box-shadow:0 10px 30px rgba(0,0,0,0.5);text-align:center;}
+.menu-buttons{display:flex;flex-direction:column;gap:10px;margin-top:20px;}
+.menu-buttons .btn{width:100%;min-width:150px;}
 .small{opacity:.8;font-size:12px}
 @media (max-width:420px){ #game{width:100vw;height:calc(100vh - 20px);} .hud{top:8px} }
