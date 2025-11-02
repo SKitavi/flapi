@@ -1,7 +1,7 @@
 define([
   "dojo/dom","dojo/dom-construct","dojo/on","dojo/keys","dojo/_base/lang","dojo/_base/fx","dojo/fx",
-  "app/config","app/game/GameEngine","app/ui/Hud","app/web3/CartridgeControllerAdapter"
-], function(dom, domConstruct, on, keys, lang, baseFx, fx, config, GameEngine, Hud, Cartridge){
+  "app/config","app/game/GameEngine","app/ui/Hud","app/web3/StarknetWalletAdapter"
+], function(dom, domConstruct, on, keys, lang, baseFx, fx, config, GameEngine, Hud, StarknetWallet){
   var canvas = dom.byId("game");
   var ctx = canvas.getContext("2d");
   var scoreNode = dom.byId("score");
@@ -36,7 +36,7 @@ define([
     }
     connectBusy = true; 
     btnWallet.textContent='Connecting…';
-    Cartridge.connect()
+    StarknetWallet.connect()
       .then(function(acct){ 
         state.walletConnected = true;
         hud.setWalletStatus(true, acct.address);
@@ -59,7 +59,7 @@ define([
     }
     btnMint.textContent = 'Minting...';
     btnMint.disabled = true;
-    Cartridge.mintScoreNFT(state.currentScore)
+    StarknetWallet.mintScoreNFT(state.currentScore)
       .then(function(result){
         if(result.success){
           nftMessage.textContent = result.message + ' TX: ' + result.txHash.slice(0, 10) + '...';
