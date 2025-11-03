@@ -5,7 +5,7 @@ You are a menacing Jack o' Lantern with glowing red eyes navigating through bloo
 ## Quick Start
 
 - Static run: open `index.html` with a static server
-  - `npx serve` (or any static server) from the project root
+  - `npx serve && npm install` from the project root
   - Open http://localhost:3000 (or the printed URL)
 - Controls: Tap/Click or press Space/Up to flap. P = pause, R = restart.
 - **Audio**: Game includes procedural audio (ambient drone, owl hoots, death sound, milestone bells). Click/tap to start and enable audio context.
@@ -70,9 +70,48 @@ You are a menacing Jack o' Lantern with glowing red eyes navigating through bloo
 
 ### Deploy Your Own NFT Contract
 ```cairo
-// Example entrypoint signature
+// Example entrypoint signature  
 fn mint_score_nft(recipient: ContractAddress, score: u256, timestamp: u64)
 ```
+
+## Starknet Deployment Guide
+
+### Prerequisites
+- Starknet CLI installed (`curl -L https://raw.githubusercontent.com/starkware-libs/starknet-foundry/master/scripts/install.sh | sh`)
+- Starknet account on Sepolia testnet with ETH for gas
+- ArgentX, Braavos, or Cartridge wallet installed
+
+### 1. Deploy NFT Contract
+```bash
+# Compile the contract
+starknet-compile contracts/SpookyScoreNFT.cairo --output contracts/SpookyScoreNFT.json
+
+# Deploy to Sepolia
+starknet deploy --contract contracts/SpookyScoreNFT.json --network sepolia
+```
+
+### 2. Update Contract Address
+After deployment, update the contract address in:
+```javascript
+// src/web3/CartridgeControllerAdapter.js
+var NFT_CONTRACT_ADDRESS = "0x0123..."; // Your deployed contract address
+```
+
+### 3. Wallet Integration
+The game supports multiple Starknet wallets:
+- **ArgentX**: Browser extension wallet
+- **Braavos**: Browser extension wallet  
+- **Cartridge Controller**: Embedded wallet with session keys
+
+### 4. Testing on Sepolia
+1. Get Sepolia ETH from [Starknet Faucet](https://starknet-faucet.vercel.app/)
+2. Deploy your game to a web server
+3. Connect wallet and test NFT minting
+4. Verify transactions on [Starkscan Sepolia](https://sepolia.starkscan.co/)
+
+### 5. Supported Networks
+- **Sepolia Testnet**: `0x534e5f5345504f4c4941` (Development)
+- **Mainnet**: `0x534e5f4d41494e` (Production - update RPC URLs)
 
 ## Development Plan
 

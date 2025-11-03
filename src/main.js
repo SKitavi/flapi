@@ -74,23 +74,78 @@ define([
   var connectBusy = false;
   on(btnWallet, 'click', function () {
     if (connectBusy) return;
+
     if (state.walletConnected) {
-      // Already connected, show address
+      // Already connected, show disconnect option or wallet info
+      var address = Cartridge.getAddress();
+      if (address) {
+        var shortAddress = address.slice(0, 6) + '...' + address.slice(-4);
+        alert('Connected: ' + shortAddress + '\n\nClick OK to disconnect.');
+        Cartridge.disconnect();
+        state.walletConnected = false;
+        hud.setWalletStatus(false, null);
+        btnWallet.textContent = 'Connect Starknet Wallet';
+      }
       return;
     }
+
     connectBusy = true;
     btnWallet.textContent = 'Connecting…';
+
     Cartridge.connect()
-      .then(function (acct) {
+      .then(function (result) {
         state.walletConnected = true;
-        hud.setWalletStatus(true, acct.address);
-        console.log('Wallet connected:', acct.address);
+        hud.setWalletStatus(true, result.address);
+
+        var shortAddress = result.address.slice(0, 6) + '...' + result.address.slice(-4);
+        btnWallet.textContent = shortAddress;
+
+        console.log('Wallet connected via', result.wallet + ':', result.address);
+
+        // Show success message
+        var successMsg = document.createElement('div');
+        successMsg.textContent = '✓ Connected to ' + result.wallet;
+        successMsg.style.cssText = `
+          position: fixed; top: 20px; right: 20px; background: #32ff64; 
+          color: #000; padding: 12px 20px; border-radius: 8px; z-index: 9999;
+          font-weight: bold; font-size: 14px;
+        `;
+        document.body.appendChild(successMsg);
+
+        setTimeout(function () {
+          if (successMsg.parentNode) {
+            document.body.removeChild(successMsg);
+          }
+        }, 3000);
       })
       .catch(function (err) {
         console.error('Connection failed:', err);
-        btnWallet.textContent = 'Connect Wallet';
+        btnWallet.textContent = 'Connect Starknet Wallet';
+
+        // Show error message
+        var errorMsg = err.message || 'Failed to connect wallet';
+        if (errorMsg.includes('cancelled') || errorMsg.includes('rejected')) {
+          return; // Don't show error for user cancellation
+        }
+
+        var errorDiv = document.createElement('div');
+        errorDiv.textContent = '⚠ ' + errorMsg;
+        errorDiv.style.cssText = `
+          position: fixed; top: 20px; right: 20px; background: #ff5500; 
+          color: #fff; padding: 12px 20px; border-radius: 8px; z-index: 9999;
+          font-weight: bold; font-size: 14px; max-width: 300px;
+        `;
+        document.body.appendChild(errorDiv);
+
+        setTimeout(function () {
+          if (errorDiv.parentNode) {
+            document.body.removeChild(errorDiv);
+          }
+        }, 5000);
       })
-      .finally(function () { connectBusy = false; });
+      .finally(function () {
+        connectBusy = false;
+      });
   });
 
   // NFT Minting
